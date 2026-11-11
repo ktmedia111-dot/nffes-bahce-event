@@ -1,33 +1,42 @@
-# N'fess Bahçe – Rezervasyon Kayıt Sistemi
+# N'fess Bahçe – Güncelleme Paketi
 
-## Hızlı başlangıç
-1. ZIP'i bilgisayarınıza çıkarın.
-2. `index.html` dosyasını açın. Kurulum gerektirmez.
-3. GitHub'da yeni bir repository oluşturun.
-4. ZIP'ten çıkan dosyaları repository'nin ana dizinine yükleyin.
-5. GitHub → Settings → Pages → Deploy from a branch → `main` ve `/ (root)` seçin.
-6. Kaydedin. GitHub Pages adresiniz birkaç dakika içinde oluşur.
+Bu paket, mevcut Supabase bağlantılı uygulamanın üzerine yüklenmek üzere hazırlanmıştır.
 
-## Dahil olan özellikler
-- Yönetim paneli ve özet göstergeler
-- Rezervasyon ekleme, düzenleme, silme ve arama
-- Aynı tarihte çakışan rezervasyon için uyarı
-- Aylık etkinlik takvimi
-- Müşteri kayıtları
-- Paket ve fiyat tanımlama
-- Anlaşma tutarı, kapora ve kalan bakiye takibi
-- Gider kayıtları ve finans özeti
-- Etkinlik türü raporları ve CSV dışa aktarma
-- JSON yedek indirme / yedekten geri yükleme
-- Mobil uyumlu arayüz
+## Bu sürümde
+- Rezervasyon formunda aktif paket seçimi
+- Paket seçildiğinde liste fiyatının önerilmesi
+- Özel/indirimli fiyatın elle değiştirilebilmesi
+- Fiyat alanı boş bırakılırsa seçilen paketin güncel fiyatının kaydedilmesi
+- Rezervasyon listesi ve CSV raporunda paket adının gösterilmesi
+- Admin hesabıyla giriş yapıldığında görünen Ekip Yönetimi bölümü
+- Personel hesaplarını onaylama / reddetme / erişimi kapatma
+- Onaylı personele ayrıca müşteri ekleme izni verme veya kaldırma
+- Mevcut Supabase Auth giriş ve kayıt ekranının korunması
 
-## Önemli: Ücretsiz sürümün veri saklama şekli
-Bu ilk paket, verileri tarayıcının yerel hafızasında (localStorage) tutar. Aynı bilgisayar ve aynı tarayıcıda çalışır. Tarayıcı verileri silinirse kayıtlar kaybolabilir; bu nedenle Ayarlar bölümünden düzenli JSON yedeği alın.
+## Kurulum – iki işlem
 
-GitHub Pages yalnızca statik dosya barındırır. Birden fazla personelin farklı telefon ve bilgisayarlardan aynı canlı veriyi görmesi için ortak bir veritabanı gerekir. Bunun için ücretsiz Supabase kullanılabilir. Supabase projesi açılması, veritabanı tablolarının kurulması ve proje anahtarlarının eklenmesi gerekir. Bu ZIP, Supabase için başlangıç SQL dosyasını içerir; canlı ortak veritabanı bağlantısı bu ilk sürümde etkin değildir.
+### 1. Supabase SQL güncellemesi
+Supabase Dashboard → SQL Editor → New query bölümünde
+`supabase/team_and_auth_update.sql` dosyasının tamamını çalıştırın.
 
-## Supabase başlangıç şeması
-`supabase/schema.sql` dosyasını Supabase Dashboard → SQL Editor alanında çalıştırabilirsiniz. Bu yalnızca veritabanı tablolarını hazırlar; uygulamaya ortak kullanıcı girişi ve senkronizasyon eklemek için ayrıca bağlantı yapılandırması gerekir.
+Bu SQL:
+- Yeni kayıt olan hesapları `staff / pending` olarak oluşturur.
+- Mevcut admin profilini değiştirmez.
+- Adminin ekip listesini okuyabilmesini sağlar.
+- Personel onayını güvenli RPC fonksiyonlarıyla yapar.
+- Müşteri ekleme iznini ayrıca admin kontrolüne bağlar.
+
+**Önemli:** Bu dosya mevcut tabloları silmez ve rezervasyon/müşteri/ödeme kayıtlarına dokunmaz.
+
+### 2. GitHub dosyalarını güncelleme
+ZIP içindeki `index.html`, `app.js` ve `style.css` dosyalarını GitHub deposunun ana dizinindeki aynı adlı dosyaların üzerine yükleyin. `supabase` klasörünü de depoya ekleyin. Commit edin ve GitHub Pages'in yayınlanmasını bekleyin.
+
+## Kullanım
+1. Yönetici Supabase Auth e-posta ve şifresiyle giriş yapar. Kullanıcı ID'si Supabase oturumundan otomatik doğrulanır; ID'yi ayrıca yazmak gerekmez.
+2. Personel giriş ekranındaki “Personel kaydı oluştur” bağlantısından ad, e-posta ve şifreyle kayıt olur.
+3. Personel kaydı `pending` durumunda kalır. Admin Ekip Yönetimi bölümünden onaylar veya reddeder.
+4. Onaylı personelin müşteri eklemesine izin vermek isterseniz aynı bölümdeki müşteri ekleme izni düğmesini açın.
+5. Rezervasyon oluştururken paket seçin. Paket seçimi liste fiyatını alana öneri olarak getirir; özel fiyat için bu tutarı değiştirebilirsiniz. Alanı boş bırakırsanız seçilen paketin o anki fiyatı kaydedilir.
 
 ## Güvenlik notu
-Bu sürümde yönetici/personel oturum açma sistemi yoktur. Hassas müşteri verilerini herkese açık bir GitHub Pages sayfasında tutmayın. Çok kullanıcılı kullanıma geçmeden önce Supabase Auth ve Row Level Security politikaları kurulmalıdır.
+Tarayıcıda yalnızca Supabase publishable key bulunur. `service_role` / secret key kesinlikle eklenmemelidir. Veritabanı güvenliği RLS ve SQL'deki güvenli fonksiyonlarla uygulanır.
