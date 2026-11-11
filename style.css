@@ -65,3 +65,5 @@ input,select,textarea{background:#fff !important;color:#17251b !important;border
 .monthnav button{background:#e8f0e9 !important;color:#174b32 !important;border-color:#c8d9cb !important}
 footer{color:#d0e2d3 !important}
 .toast{background:#103923 !important;color:#fff !important}
+
+.admin-only[hidden]{display:none!important}
