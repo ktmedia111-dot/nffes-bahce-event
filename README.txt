@@ -1,4 +1,4 @@
-# NFFES Bahçe Event – Rezervasyon Kayıt Sistemi
+# N'fess Bahçe – Rezervasyon Kayıt Sistemi
 
 ## Hızlı başlangıç
 1. ZIP'i bilgisayarınıza çıkarın.

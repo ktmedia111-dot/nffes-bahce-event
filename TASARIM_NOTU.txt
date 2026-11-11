@@ -1,0 +1,3 @@
+Marka adı: N'fess Bahçe
+Tema: Beyaz zemin, siyah tipografi, koyu yeşil vurgu renkleri.
+Bu güncelleme mevcut GitHub Pages projesinin dosyalarının üzerine yüklenerek yayınlanabilir.

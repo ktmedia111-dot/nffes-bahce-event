@@ -5,3 +5,63 @@
 
 /* N'fess Bahçe light premium theme */
 .brandname{color:#111f16}.eyebrow{color:#174b32}.bar i{background:linear-gradient(90deg,#174b32,#70a783)}
+
+
+/* N'fess Bahçe — YEŞİL ZEMİN GÜNCELLEMESİ */
+:root{
+  --bg:#174b32;
+  --panel:#f7faf7;
+  --panel2:#e8f0e9;
+  --line:#a9c2ae;
+  --green:#174b32;
+  --gold:#b99a61;
+  --text:#15251a;
+  --muted:#5e7163;
+  --red:#a83f36;
+  --amber:#8a641d;
+}
+html,body{background:#174b32 !important;color:#15251a !important}
+.app{background:#174b32 !important}
+.sidebar{background:#103923 !important;border-right:1px solid #2d6847 !important;color:#fff !important}
+.brand,.brandname{color:#fff !important}
+.brandname small{color:#d0e2d3 !important}
+.nav{color:#e5f0e7 !important}
+.nav:hover,.nav.active{background:#2c7048 !important;color:#fff !important;box-shadow:inset 3px 0 #9bd6a8 !important}
+.sidefoot{color:#e5f0e7 !important}
+.sidefoot small{color:#b9d0bf !important}
+.main{background:#174b32 !important;color:#fff !important}
+.topbar{border-bottom-color:#477b59 !important}
+h1,.topbar b,.panel h2{color:#fff !important}
+.eyebrow{color:#b9e4c2 !important}
+.today{color:#d0e2d3 !important}
+.avatar{background:#dceee0 !important;color:#174b32 !important}
+.stat,.panel{background:#f7faf7 !important;border:1px solid #c8d9cb !important;color:#15251a !important;box-shadow:0 4px 14px #09251630 !important}
+.stat label,.muted{color:#5e7163 !important}
+.stat strong{color:#15251a !important}
+.stat em{color:#24643c !important}
+.panel h2{color:#15251a !important}
+th{color:#5e7163 !important;border-bottom-color:#d6e2d8 !important}
+td{color:#17251b !important;border-bottom-color:#e0e9e1 !important}
+.btn{background:#174b32 !important;border-color:#174b32 !important;color:#fff !important}
+.btn.secondary{background:#e8f0e9 !important;border-color:#c8d9cb !important;color:#174b32 !important}
+.btn.danger{background:#a83f36 !important;color:#fff !important}
+.quick button{background:#e8f0e9 !important;border-color:#c8d9cb !important;color:#173b25 !important}
+.quick b{color:#174b32 !important}
+.notice{background:#f7f0dc !important;border-color:#d9c58d !important;color:#624b18 !important}
+input,select,textarea{background:#fff !important;color:#17251b !important;border-color:#c2d3c5 !important}
+.modalbox{background:#f7faf7 !important;color:#17251b !important;border-color:#c2d3c5 !important}
+.modalhead h2{color:#17251b !important}
+.x{color:#17251b !important}
+.day{border-color:#cbdace !important;color:#17251b !important}
+.dayhead{color:#5e7163 !important}
+.event{background:#dceee1 !important;color:#174b32 !important}
+.event.pending{background:#f8edcf !important;color:#775315 !important}
+.event.cancel{background:#f7e2df !important;color:#923b34 !important}
+.status{background:#e0efe4 !important;color:#174b32 !important}
+.status.pending{background:#f8edcf !important;color:#805b17 !important}
+.status.cancel{background:#f7e2df !important;color:#923b34 !important}
+.bar{background:#dce8de !important}
+.bar i{background:linear-gradient(90deg,#174b32,#70a783) !important}
+.monthnav button{background:#e8f0e9 !important;color:#174b32 !important;border-color:#c8d9cb !important}
+footer{color:#d0e2d3 !important}
+.toast{background:#103923 !important;color:#fff !important}
