@@ -29,6 +29,13 @@ create trigger zz_nffes_on_auth_user_created
 after insert on auth.users
 for each row execute procedure public.nffes_handle_new_user();
 
+-- Kurulumdan önce Auth kullanıcısı oluşturulmuşsa eksik profili ekle;
+-- var olan admin/personel rollerine dokunma.
+insert into public.profiles (id, full_name, role, approval_status, can_add_customers)
+select u.id, coalesce(u.raw_user_meta_data->>'full_name', ''), 'staff', 'pending', false
+from auth.users u
+on conflict (id) do nothing;
+
 -- 2) RLS döngüsü oluşturmadan yönetici kontrolü.
 create or replace function public.nffes_is_admin()
 returns boolean
@@ -211,3 +218,124 @@ revoke all on function public.admin_delete_staff(uuid) from public;
 grant execute on function public.admin_delete_staff(uuid) to authenticated;
 
 -- Mevcut admin hesabının role/approval_status değerleri değiştirilmez.
+
+-- 8) Yalnızca onaylı kullanıcılar uygulama verilerine erişebilir.
+create or replace function public.nffes_is_approved()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.profiles p
+    where p.id = auth.uid()
+      and p.approval_status = 'approved'
+      and p.role in ('admin', 'staff')
+  );
+$$;
+
+-- 9) Uygulama tablolarındaki eski RLS politikalarını değiştir; permissive
+-- politikalar PostgreSQL'de OR ile birleştiği için eski erişimleri bırakmayız.
+do $$
+declare policy_row record;
+begin
+  for policy_row in
+    select tablename, policyname
+    from pg_policies
+    where schemaname = 'public'
+      and tablename in ('profiles', 'customers', 'packages', 'reservations', 'payments', 'expenses')
+  loop
+    execute format('drop policy if exists %I on public.%I', policy_row.policyname, policy_row.tablename);
+  end loop;
+end;
+$$;
+
+-- Profiles: kullanıcı kendi durumunu; admin ekip profil listesini görür.
+create policy nffes_profiles_read_self
+on public.profiles for select to authenticated
+using (id = auth.uid());
+create policy nffes_profiles_read_admin
+on public.profiles for select to authenticated
+using (public.nffes_is_admin());
+
+-- Customers: onaylı personel okuyabilir; ekleme admin/izinli personele açıktır.
+create policy nffes_customers_read_approved
+on public.customers for select to authenticated
+using (public.nffes_is_approved());
+create policy nffes_customers_insert_authorized
+on public.customers for insert to authenticated
+with check (public.nffes_can_add_customers());
+create policy nffes_customers_update_admin
+on public.customers for update to authenticated
+using (public.nffes_is_admin()) with check (public.nffes_is_admin());
+create policy nffes_customers_delete_admin
+on public.customers for delete to authenticated
+using (public.nffes_is_admin());
+
+-- Packages: onaylı ekip okuyabilir; içerik ve fiyatları admin yönetir.
+create policy nffes_packages_read_approved
+on public.packages for select to authenticated
+using (public.nffes_is_approved());
+create policy nffes_packages_insert_admin
+on public.packages for insert to authenticated
+with check (public.nffes_is_admin());
+create policy nffes_packages_update_admin
+on public.packages for update to authenticated
+using (public.nffes_is_admin()) with check (public.nffes_is_admin());
+create policy nffes_packages_delete_admin
+on public.packages for delete to authenticated
+using (public.nffes_is_admin());
+
+-- Rezervasyon: onaylı ekip kayıt açabilir; düzenleme/silme admin yetkisindedir.
+create policy nffes_reservations_read_approved
+on public.reservations for select to authenticated
+using (public.nffes_is_approved());
+create policy nffes_reservations_insert_approved
+on public.reservations for insert to authenticated
+with check (public.nffes_is_approved() and (created_by is null or created_by = auth.uid()));
+create policy nffes_reservations_update_admin
+on public.reservations for update to authenticated
+using (public.nffes_is_admin()) with check (public.nffes_is_admin());
+create policy nffes_reservations_delete_admin
+on public.reservations for delete to authenticated
+using (public.nffes_is_admin());
+
+-- Ödemeler ve giderler yalnızca admin tarafından görüntülenip yönetilir.
+create policy nffes_payments_read_admin
+on public.payments for select to authenticated
+using (public.nffes_is_admin());
+create policy nffes_payments_insert_admin
+on public.payments for insert to authenticated
+with check (public.nffes_is_admin() and (received_by is null or received_by = auth.uid()));
+create policy nffes_payments_update_admin
+on public.payments for update to authenticated
+using (public.nffes_is_admin()) with check (public.nffes_is_admin());
+create policy nffes_payments_delete_admin
+on public.payments for delete to authenticated
+using (public.nffes_is_admin());
+create policy nffes_expenses_read_admin
+on public.expenses for select to authenticated
+using (public.nffes_is_admin());
+create policy nffes_expenses_insert_admin
+on public.expenses for insert to authenticated
+with check (public.nffes_is_admin() and (created_by is null or created_by = auth.uid()));
+create policy nffes_expenses_update_admin
+on public.expenses for update to authenticated
+using (public.nffes_is_admin()) with check (public.nffes_is_admin());
+create policy nffes_expenses_delete_admin
+on public.expenses for delete to authenticated
+using (public.nffes_is_admin());
+
+-- RLS'nin yanında tablo izinlerini de açık ve sınırlı tut.
+revoke all on public.profiles, public.customers, public.packages,
+  public.reservations, public.payments, public.expenses from public, anon;
+grant select on public.profiles to authenticated;
+grant select, insert, update, delete on public.customers, public.packages,
+  public.reservations, public.payments, public.expenses to authenticated;
+revoke all on function public.nffes_is_admin() from public;
+revoke all on function public.nffes_is_approved() from public;
+revoke all on function public.nffes_can_add_customers() from public;
+grant execute on function public.nffes_is_admin() to authenticated;
+grant execute on function public.nffes_is_approved() to authenticated;
+grant execute on function public.nffes_can_add_customers() to authenticated;
