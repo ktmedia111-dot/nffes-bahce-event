@@ -1,42 +1,51 @@
-# N'fess Bahçe – Güncelleme Paketi
+# N'fess Bahçe Event — Rezervasyon Yönetimi
 
-Bu paket, mevcut Supabase bağlantılı uygulamanın üzerine yüklenmek üzere hazırlanmıştır.
+Uygulama GitHub Pages arayüzünü, Supabase Auth girişini ve Supabase veritabanını kullanır. `main` dalındaki kod tek başına yeterli değildir; Supabase tabloları, RLS izinleri ve ilk yönetici hesabı da hazırlanmalıdır.
 
-## Bu sürümde
-- Rezervasyon formunda aktif paket seçimi
-- Paket seçildiğinde liste fiyatının önerilmesi
-- Özel/indirimli fiyatın elle değiştirilebilmesi
-- Fiyat alanı boş bırakılırsa seçilen paketin güncel fiyatının kaydedilmesi
-- Rezervasyon listesi ve CSV raporunda paket adının gösterilmesi
-- Admin hesabıyla giriş yapıldığında görünen Ekip Yönetimi bölümü
-- Personel hesaplarını onaylama / reddetme / erişimi kapatma
-- Onaylı personele ayrıca müşteri ekleme izni verme veya kaldırma
-- Mevcut Supabase Auth giriş ve kayıt ekranının korunması
+## Tek seferlik kurulum
 
-## Kurulum – iki işlem
+### 1. Supabase veritabanını hazırla
 
-### 1. Supabase SQL güncellemesi
-Supabase Dashboard → SQL Editor → New query bölümünde
-`supabase/team_and_auth_update.sql` dosyasının tamamını çalıştırın.
+Supabase Dashboard → SQL Editor → New query bölümünde `supabase/setup.sql` dosyasının tamamını çalıştırın. Bu script tabloları/eksik sütunları oluşturur, kayıtları korur ve uygulamanın rol bazlı RLS politikalarını kurar.
 
-Bu SQL:
-- Yeni kayıt olan hesapları `staff / pending` olarak oluşturur.
-- Mevcut admin profilini değiştirmez.
-- Adminin ekip listesini okuyabilmesini sağlar.
-- Personel onayını güvenli RPC fonksiyonlarıyla yapar.
-- Müşteri ekleme iznini ayrıca admin kontrolüne bağlar.
+Script, altı uygulama tablosundaki eski RLS politikalarını kendi güvenli rol kurallarıyla değiştirir. Rezervasyon, müşteri, paket, ödeme veya gider satırlarını silmez.
 
-**Önemli:** Bu dosya mevcut tabloları silmez ve rezervasyon/müşteri/ödeme kayıtlarına dokunmaz.
+### 2. İlk yönetici hesabını aç
 
-### 2. GitHub dosyalarını güncelleme
-ZIP içindeki `index.html`, `app.js` ve `style.css` dosyalarını GitHub deposunun ana dizinindeki aynı adlı dosyaların üzerine yükleyin. `supabase` klasörünü de depoya ekleyin. Commit edin ve GitHub Pages'in yayınlanmasını bekleyin.
+GitHub Pages adresinde **Personel kaydı oluştur** ile kendi hesabınızı oluşturup e-posta doğrulamasını tamamlayın. İlk kullanıcı güvenlik nedeniyle otomatik yönetici yapılmaz. Supabase SQL Editor'de aşağıdaki sorguda e-posta adresini kendi hesabınızla değiştirip çalıştırın:
+
+```sql
+update public.profiles p
+set role = 'admin', approval_status = 'approved', can_add_customers = true
+from auth.users u
+where p.id = u.id and lower(u.email) = lower('yonetici@example.com');
+```
+
+Bu sorgunun tek satır güncellediğini kontrol edin. Sonra uygulamadan çıkıp tekrar giriş yapın. Zaten `admin / approved` hesabınız varsa bu adımı atlayın.
+
+### 3. GitHub Pages'i aç
+
+GitHub deposunda Settings → Pages bölümünde yayın kaynağını `Deploy from a branch`, dalı `main`, klasörü `/(root)` olarak seçin. Sayfa yayınlandıktan sonra `https://ktmedia111-dot.github.io/nffes-bahce-event/` adresini açın.
 
 ## Kullanım
-1. Yönetici Supabase Auth e-posta ve şifresiyle giriş yapar. Kullanıcı ID'si Supabase oturumundan otomatik doğrulanır; ID'yi ayrıca yazmak gerekmez.
-2. Personel giriş ekranındaki “Personel kaydı oluştur” bağlantısından ad, e-posta ve şifreyle kayıt olur.
-3. Personel kaydı `pending` durumunda kalır. Admin Ekip Yönetimi bölümünden onaylar veya reddeder.
-4. Onaylı personelin müşteri eklemesine izin vermek isterseniz aynı bölümdeki müşteri ekleme izni düğmesini açın.
-5. Rezervasyon oluştururken paket seçin. Paket seçimi liste fiyatını alana öneri olarak getirir; özel fiyat için bu tutarı değiştirebilirsiniz. Alanı boş bırakırsanız seçilen paketin o anki fiyatı kaydedilir.
 
-## Güvenlik notu
-Tarayıcıda yalnızca Supabase publishable key bulunur. `service_role` / secret key kesinlikle eklenmemelidir. Veritabanı güvenliği RLS ve SQL'deki güvenli fonksiyonlarla uygulanır.
+- Yönetici giriş yaptıktan sonra Paketler & Fiyatlar bölümünden paket ekleyebilir.
+- Yeni rezervasyonda mevcut müşteri önerilerinden seçim yapabilir veya aynı **Müşteri adı** alanına yeni isim yazabilir. Ad, telefon ve rezervasyon kaydı birlikte saklanır.
+- Personel onay bekler. Yönetici Ekip Yönetimi'nden personeli onaylayabilir; müşteri kartı ekleme iznini ayrıca verebilir. Bu izin yoksa personel yine rezervasyon oluşturabilir; müşteri adı ve telefon rezervasyon üzerinde saklanır.
+- Rezervasyon formunda paket seçildiğinde fiyat boşsa paket fiyatı önerilir. Fiyatı elle değiştirebilirsiniz.
+- Ödeme ve gider ekranı yalnızca yöneticiye açıktır. Finans kayıtlarını ekip üyeleri okuyamaz veya değiştiremez.
+
+## Güvenlik ve sorun giderme
+
+- Tarayıcıda yalnızca Supabase publishable key bulunur. `service_role` veya secret key eklemeyin.
+- Girişten sonra “Profil okunamadı” görülürse `supabase/setup.sql` tamamlanmamış olabilir. Supabase SQL Editor'deki hata mesajını kontrol edin.
+- İlk yönetici oluşturulmadıysa yeni hesap “Yönetici onayı bekleniyor” ekranında kalır. Yukarıdaki yönetici sorgusunu bir kez çalıştırın.
+- Rezervasyon, paket, ödeme veya gider kaydında sütun hatası görülürse `supabase/setup.sql` dosyasını yeniden çalıştırın; script mevcut uygulama verilerini silmez.
+- E-posta doğrulama ile parola politikaları Supabase Authentication → Providers / Email ayarlarından yönetilir.
+
+## Veritabanı dosyaları
+
+- `supabase/setup.sql`: Önerilen tek kurulum/güncelleme scripti; şema ve ekip/RLS güncellemesini birlikte içerir.
+- `supabase/schema.sql`: Sadece uygulama tabloları ve sütunları.
+- `supabase/team_and_auth_update.sql`: Ekip yönetimi, ilk giriş profili ve RLS kuralları. `setup.sql` zaten bu bölümü içerir; aynı kurulumda iki kez çalıştırmayın.
+- `supabase/team_management_update.sql`: Eski uyumluluk dosyası; yeni kurulumda `setup.sql` kullanın.
